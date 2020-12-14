@@ -41,7 +41,7 @@ You may only submit one file with maximum 100 MB in size
 __author__ = "Corrado Lanera"
 __credits__ = "https://stackoverflow.com/questions/9437726/how-to-get-the-value-of-a-variable-given-its-name-in-a-string"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 __maintainer__ = "Corrado Lanera"
 __email__ = "corrado.lanera@gmail.com"
 
@@ -50,7 +50,6 @@ __email__ = "corrado.lanera@gmail.com"
 Title = "November Rain"
 Year = 1992
 Artist = "Guns N' Roses"
-Wiky = "https://en.wikipedia.org/wiki/November_Rain"
 
 
 def print_favourite(what):
@@ -59,7 +58,8 @@ def print_favourite(what):
     # for usage for globals() at: https://www.geeksforgeeks.org/python-globals-function/
     print(
         "My favourite song's", what.lower(), "is:",
-        globals()[what.title()]
+        globals()[what.title()],
+        end=".\n"
     )
 
 
