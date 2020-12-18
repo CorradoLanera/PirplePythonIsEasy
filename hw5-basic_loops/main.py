@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-main.py: Homework #4: Lists (Python Is Easy course by Pirple)
+main.py: Homework #5: Basic Loops (Python Is Easy course by Pirple)
 
 Details:
 
