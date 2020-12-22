@@ -33,26 +33,55 @@ You may only submit one file with maximum 100 MB in size
 """
 
 __author__ = "Corrado Lanera"
-__credits__ = [
-    "https://stackoverflow.com/questions/366422/what-is-the-pythonic-way-to-avoid-default-parameters-that-are-empty-lists",
-    "https://note.nkmk.me/en/python-divmod-quotient-remainder/"
-]
+__credits__ = "https://www.geeksforgeeks.org/python-accessing-key-value-in-dictionary/"
 __license__ = "MIT"
-__version__ = "0.0.1"
+__version__ = "1.0.0"
 __maintainer__ = "Corrado Lanera"
 __email__ = "corrado.lanera@gmail.com"
-
 
 # ----------------------------------------------------------------------
 
 
 # ---- Functions' checks ----
 
+my_song = {
+    "Title": "November Rain",
+    "Year": 1992,
+    "Month": 2,
+    "Day": 18,
+    "Artist": "Guns N' Roses",
+    "Text": "Axl Rose",
+    "Album": "Use Your Illusion I",
+    "Genre": "Hard Rock",
+    "Awards": "MTV Video Music Award for Best Cinematography",
+    "DurationInSecondsAlbum": 537,
+    "DurationInSecondsRadio": 283,
+    "Platinum": 5,
+    "Gold": 4,
+    "Wiki": "https://en.wikipedia.org/wiki/November_Rain"
+}
+
+for entry in my_song:
+    # https://www.geeksforgeeks.org/python-accessing-key-value-in-dictionary/
+    print(
+        "My favourite song's " + entry +
+        " is: " + str(my_song[entry]) + "."
+    )
+
+
+def guess_my_song_property(key, value):
+    # I would like to be string/numeric inclusive
+    return key in my_song and str(my_song[key]) == str(value)
 
 
 print("\n\n=== Checks starts ===\n")
 check_res = [
-    False
+    guess_my_song_property("Title", "November Rain"),
+    not guess_my_song_property("Title", "Sweet Child O' Mine"),
+    not guess_my_song_property("foo", "November Rain"),
+    not guess_my_song_property("foo", "bar"),
+    guess_my_song_property("Gold", 4),
+    guess_my_song_property("Gold", "4"),
 ]
 
 if all(check_res):
