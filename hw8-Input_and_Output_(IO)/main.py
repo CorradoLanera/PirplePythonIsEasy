@@ -87,8 +87,8 @@ def write_new_note(x, note=None, check_last=True):
     if check_last is True:
         note = fix_last(note)
 
-    with open(x, "w") as f:
-        f.writelines(note)
+    with open(x, "w") as fw:
+        fw.writelines(note)
         print("Content written to " + x)
 
     return x
@@ -102,16 +102,16 @@ def continue_note(x, note=None, check_last=True):
     if check_last is True:
         note = fix_last(note)
 
-    with open(x, "a") as f:
-        f.writelines(note)
+    with open(x, "a") as fc:
+        fc.writelines(note)
         print("Content added to " + x)
 
     return x
 
 
 def print_note(x):
-    with open(x) as f:
-        print(f.read())
+    with open(x) as fp:
+        print(fp.read())
     return x
 
 
@@ -142,6 +142,7 @@ def ask_for_selection(options):
     options = set(options)
 
     ok = False
+    selection = "q"  # in case of error inside the loop
     while not ok:
         selection = input(
             "Please, enter your selection (\"q\" to exit): "
@@ -158,9 +159,9 @@ def ask_for_selection(options):
 
 
 def possible_lines_to_replace(x):
-    with open(x) as f:
+    with open(x) as fpr:
         # https://stackoverflow.com/questions/26320175/how-to-convert-integers-in-list-to-string-in-python
-        options = set(map(str, range(1, len(f.readlines()) + 1)))
+        options = set(map(str, range(1, len(fpr.readlines()) + 1)))
 
     return options
 
@@ -169,13 +170,13 @@ def line_replace(x, line_n, replacement, check_last=True):
     if check_last:
         replacement = fix_last(replacement)
 
-    with open(x, "r") as f:
-        current = f.readlines()
+    with open(x, "r") as frr:
+        current = frr.readlines()
         print("Line to replace was: " + current[int(line_n) - 1])
         current[int(line_n) - 1] = replacement
 
-    with open(x, "w") as f:
-        f.writelines(current)
+    with open(x, "w") as frw:
+        frw.writelines(current)
         print("Line to replace is now: " + current[int(line_n) - 1])
 
     return x
