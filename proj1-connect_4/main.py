@@ -43,13 +43,205 @@ You may only submit one file with maximum 100 MB in size
 """
 
 __author__ = "Corrado Lanera"
-__credits__ = []
+__credits__ = [
+    "https://www.geeksforgeeks.org/python-which-is-faster-to-initialize-lists/"
+]
 __license__ = "MIT"
 __version__ = "0.0.1"
 __maintainer__ = "Corrado Lanera"
 __email__ = "corrado.lanera@gmail.com"
 
+
 # --- PROGRAM DEFINITIONS ----------------------------------------------
+def draw_new_board():
+    cols = 7
+    rows = 6
+    rows_range = range(2 * rows + 1)
+    cols_range = range(2 * cols + 1)
+    # https://www.geeksforgeeks.org/python-which-is-faster-to-initialize-lists/
+    board = [["" for i in cols_range] for j in rows_range]
+    for x in rows_range:
+        if x % 2 == 0:
+            # dash-es line
+            board[x] = ["-" for i in cols_range]
+        else:
+            # vert and space line
+            for y in cols_range:
+                if y % 2 == 0:
+                    # vert
+                    board[x][y] = "|"
+                else:
+                    # space
+                    board[x][y] = " "
+    return board
+
+
+def print_board(x):
+    for j in range(len(x)):
+        for i in range(len(x[j])):
+            print(x[j][i], end=" ")
+        print()
+
+
+def select_player(player):
+    if player == 1:
+        selected_piece = "X"
+    elif player == 2:
+        selected_piece = "O"
+
+    return selected_piece
+
+
+def check_player(player):
+    player_set = {1, 2}
+    player_ok = player in player_set
+    while player_ok is not True:
+        player = int(input(
+            "Only player 1 or 2 are allowed. Who play now? "
+        ))
+        player_ok = player in player_set
+    return player
+
+
+def check_column(column):
+    col_set = {1, 2, 3, 4, 5, 6, 7}
+    column_ok = column in col_set
+    while column_ok is not True:
+        column = int(input(
+            "Column range from 1 to 7. Where do you like to play? "
+        ))
+        column_ok = column in col_set
+    return column
+
+
+def check_row_col(board, column):
+    row_range = range(len(board))
+    row_ok = False
+
+    while row_ok is not True:
+        column_at_board = 2 * column - 1
+        # print("col at board: ", column_at_board)
+        col = [board[i][column_at_board] for i in row_range if i % 2 != 0]
+        # print("col: ", col)
+
+        empties = [i + 1 for i, j in enumerate(col) if j == " "]
+        # print("empties: ", empties)
+        row_ok = empties != []
+        # print("row_ok", row_ok)
+        if row_ok is True:
+            first_empty = max(empties)
+        else:
+            column = int(input(
+                "Selected column is full. Please, select another column: "
+            ))
+            column = check_column(column)
+    return first_empty, column
+
+
+def put_piece(board, player, column):
+    player = check_player(player)
+    piece = select_player(player)
+
+    column = check_column(column)
+
+    row, col = check_row_col(board, column)
+    row_at_board = 2 * row - 1
+    col_at_board = 2 * col - 1
+    board[row_at_board][col_at_board] = piece
+
+    return board
+
+
+def end(board):
+    row_count = {"X": 0, "O": 0, " ": 0}
+    for i in [1, 2, 3, 4, 5, 6]:
+        i_in_board = 2 * i - 1
+        for j in [1, 2, 3, 4, 5, 6, 7]:
+            j_in_board = 2 * j - 1
+            print(
+                "! THIS IS AN ERROR: IT DOES NOT CHECK FOR CONTIGUOUS SIGNS!"
+            )
+            sign = board[i_in_board][j_in_board]
+            if sign != " ":
+                row_count[sign] += 1
+                winner = [j for j in row_count if row_count[j] == 4]
+                if winner:
+                    return winner
+
+    col_count = {"X": 0, "O": 0, " ": 0}
+    for j in [1, 2, 3, 4, 5, 6, 7]:
+        j_in_board = 2 * j - 1
+        for i in [1, 2, 3, 4, 5, 6]:
+            i_in_board = 2 * i - 1
+            sign = board[i_in_board][j_in_board]
+            if sign != " ":
+                col_count[sign] += 1
+                winner = [i for i in col_count if col_count[i] == 4]
+                if winner:
+                    return winner
+
+    diag_count = {"X": 0, "O": 0, " ": 0}
+    for index_sum in range(2, 13):
+        for i in [1, 2, 3, 4, 5, 6]:
+            for j in [1, 2, 3, 4, 5, 6, 7]:
+                if i + j != index_sum:
+                    continue
+                i_at_board = 2 * i - 1
+                j_at_board = 2 * j - 1
+                if board[i_at_board][j_at_board] != " ":
+                    diag_count[board[i_at_board][j_at_board]] += 1
+                    winner = [x for x in diag_count if diag_count[x] == 4]
+                    if winner:
+                        return winner
+
+    diag_inv_count = {"X": 0, "O": 0, " ": 0}
+    for index_sum in range(0, -6, -1):
+        for i in [1, 2, 3, 4, 5, 6]:
+            for j in [1, 2, 3, 4, 5, 6, 7]:
+                if i - j != index_sum:
+                    continue
+                i_at_board = 2 * i - 1
+                j_at_board = 2 * j - 1
+                if board[i_at_board][j_at_board] != " ":
+                    diag_inv_count[board[i_at_board][j_at_board]] += 1
+                    winner = [x for x in diag_inv_count if
+                              diag_inv_count[x] == 4]
+                    if winner:
+                        return winner
+
+    if not winner:
+        empties = 0
+        for i in board:
+            for j in i:
+                if j == " ":
+                    empties += 1
+        if empties == 0:
+            winner = ["none"]
+    print("Empties left: ", empties)
+
+    return winner
+
+
+def play():
+    game = draw_new_board()
+    print_board(game)
+    current_player = 1
+
+    in_game = True
+    while in_game is True:
+        print("It is the turn of player ", current_player)
+        column = int(input("Select a column for your piece: "))
+        put_piece(game, current_player, column)
+        print_board(game)
+        current_player = abs(3 - current_player)
+
+        res = end(game)
+        if res:
+            in_game = False
+
+    res = {"X": "player 1", "O": "player 2", "none": "none"}[res[0]]
+    print("Game Over. The winner is:", res)
+    return game
 
 
 # --- PROGRMA CHECKS AND INTERACTIONS ----------------------------------
@@ -59,8 +251,8 @@ if __name__ == '__main__':
     # ---- Functions' checks ----
     print("\n\n=== Checks starts ===\n")
     check_res = [
+        True
     ]
-
 
     if all(check_res):
         print("\n=== All checks passed ===\n\n")
@@ -76,7 +268,7 @@ if __name__ == '__main__':
     )
     go = like_to_start == ""
     while go is True:
-        print("!!! Here will run the program !!!")
+        play()
         go_on = input(
             "Press Enter to continue the interactive simulation" +
             " (anything else will quit it)."
