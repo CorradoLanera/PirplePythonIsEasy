@@ -151,75 +151,68 @@ def put_piece(board, player, column):
 
     return board
 
+def check_sequence(x, n):
+    if n > len(x):
+        return [False, " "]
+    for i in range(len(x) - n + 1):
+        ref = x[i]
+        if ref == " ":
+            continue
+        res = True
+        for j in range(n):
+            res = res and (ref == x[i + j])
+        if res is True:
+            return [True, ref]
+
+    return [False, " "]
+
 
 def end(board):
-    row_count = {"X": 0, "O": 0, " ": 0}
-    for i in [1, 2, 3, 4, 5, 6]:
+    rows = [1, 2, 3, 4, 5, 6]
+    cols = [1, 2, 3, 4, 5, 6, 7]
+
+    for i in rows:
         i_in_board = 2 * i - 1
-        for j in [1, 2, 3, 4, 5, 6, 7]:
-            j_in_board = 2 * j - 1
-            print(
-                "! THIS IS AN ERROR: IT DOES NOT CHECK FOR CONTIGUOUS SIGNS!"
-            )
-            sign = board[i_in_board][j_in_board]
-            if sign != " ":
-                row_count[sign] += 1
-                winner = [j for j in row_count if row_count[j] == 4]
-                if winner:
-                    return winner
+        row = [x for x in board[i_in_board] if x not in {"|", " "}]
+        # print("row:", row)
+        winner = check_sequence(row, 4)
+        # print("winner row:", winner)
+        if winner[0]:
+            return winner
 
-    col_count = {"X": 0, "O": 0, " ": 0}
-    for j in [1, 2, 3, 4, 5, 6, 7]:
+    for j in cols:
         j_in_board = 2 * j - 1
-        for i in [1, 2, 3, 4, 5, 6]:
-            i_in_board = 2 * i - 1
-            sign = board[i_in_board][j_in_board]
-            if sign != " ":
-                col_count[sign] += 1
-                winner = [i for i in col_count if col_count[i] == 4]
-                if winner:
-                    return winner
+        col = [board[i][j_in_board] for i in range(13) if i % 2 != 0]
+        # print("col:", col)
+        winner = check_sequence(col, 4)
+        # print("winner col:", winner)
+        if winner[0]:
+            return winner
 
-    diag_count = {"X": 0, "O": 0, " ": 0}
     for index_sum in range(2, 13):
-        for i in [1, 2, 3, 4, 5, 6]:
-            for j in [1, 2, 3, 4, 5, 6, 7]:
-                if i + j != index_sum:
-                    continue
-                i_at_board = 2 * i - 1
-                j_at_board = 2 * j - 1
-                if board[i_at_board][j_at_board] != " ":
-                    diag_count[board[i_at_board][j_at_board]] += 1
-                    winner = [x for x in diag_count if diag_count[x] == 4]
-                    if winner:
-                        return winner
+        diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if i + j == index_sum]
+        # print("diag:", diag)
+        winner = check_sequence(diag, 4)
+        # print("winner diag:", winner)
+        if winner[0]:
+            return winner
 
-    diag_inv_count = {"X": 0, "O": 0, " ": 0}
     for index_sum in range(0, -6, -1):
-        for i in [1, 2, 3, 4, 5, 6]:
-            for j in [1, 2, 3, 4, 5, 6, 7]:
-                if i - j != index_sum:
-                    continue
-                i_at_board = 2 * i - 1
-                j_at_board = 2 * j - 1
-                if board[i_at_board][j_at_board] != " ":
-                    diag_inv_count[board[i_at_board][j_at_board]] += 1
-                    winner = [x for x in diag_inv_count if
-                              diag_inv_count[x] == 4]
-                    if winner:
-                        return winner
+        rev_diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if i - j == index_sum]
+        winner = check_sequence(rev_diag, 4)
+        if winner[0]:
+            return winner
 
-    if not winner:
-        empties = 0
-        for i in board:
-            for j in i:
-                if j == " ":
-                    empties += 1
-        if empties == 0:
-            winner = ["none"]
+    empties = 0
+    for i in board:
+        for j in i:
+            if j == " ":
+                empties += 1
+    if empties == 0:
+        return [True, "none"]
     print("Empties left: ", empties)
 
-    return winner
+    return [False, " "]
 
 
 def play():
@@ -236,10 +229,10 @@ def play():
         current_player = abs(3 - current_player)
 
         res = end(game)
-        if res:
-            in_game = False
+        print("res: ", res)
+        in_game = not res[0]
 
-    res = {"X": "player 1", "O": "player 2", "none": "none"}[res[0]]
+    res = {"X": "player 1", "O": "player 2", "none": "none"}[res[1]]
     print("Game Over. The winner is:", res)
     return game
 
@@ -251,7 +244,15 @@ if __name__ == '__main__':
     # ---- Functions' checks ----
     print("\n\n=== Checks starts ===\n")
     check_res = [
-        True
+        [True, 1] == check_sequence([1, 2, 3, 4], 1),
+        [False, " "] == check_sequence([1, 2, 3, 4], 2),
+        [True, 1] == check_sequence([1, 1, 3, 4, 6], 2),
+        [True, 3] == check_sequence([1, 2, 3, 3], 2),
+        [True, 1] == check_sequence([1, 1, 1, 4], 3),
+        [True, 1] == check_sequence([4, 1, 1, 1], 3),
+        [True, 1] == check_sequence([1, 1, 1, 1, 1, 6, 8, 7], 4),
+        [True, 3] == check_sequence([1, 2, 3, 3, 3, 3, 8, 7], 4),
+        [False, " "] == check_sequence([3, 3, 3, 4, 4, 3, 3, 3], 4)
     ]
 
     if all(check_res):
