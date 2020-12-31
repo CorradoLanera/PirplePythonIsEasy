@@ -44,13 +44,20 @@ You may only submit one file with maximum 100 MB in size
 
 __author__ = "Corrado Lanera"
 __credits__ = [
-    "https://www.geeksforgeeks.org/python-which-is-faster-to-initialize-lists/"
+    "https://www.geeksforgeeks.org/python-which-is-faster-to-initialize-lists/",
+    "https://stackoverflow.com/questions/22054698/python-modifying-list-inside-a-function",
+    "https://stackoverflow.com/questions/2612802/list-changes-unexpectedly-after-assignment-how-do-i-clone-or-copy-it-to-prevent",
+    "https://www.programiz.com/python-programming/methods/list/copy",
+    "https://stackoverflow.com/questions/28684154/python-copy-a-list-of-lists"
 ]
 __license__ = "MIT"
 __version__ = "0.0.1"
 __maintainer__ = "Corrado Lanera"
 __email__ = "corrado.lanera@gmail.com"
 
+
+# --- MODULES ----------------------------------------------------------
+import copy
 
 # --- PROGRAM DEFINITIONS ----------------------------------------------
 def draw_new_board():
@@ -88,6 +95,9 @@ def select_player(player):
         selected_piece = "X"
     elif player == 2:
         selected_piece = "O"
+    else:
+        print("Wrong player selected")
+        selected_piece = "!!!"
 
     return selected_piece
 
@@ -117,6 +127,7 @@ def check_column(column):
 def check_row_col(board, column):
     row_range = range(len(board))
     row_ok = False
+    first_empty = 0
 
     while row_ok is not True:
         column_at_board = 2 * column - 1
@@ -147,9 +158,16 @@ def put_piece(board, player, column):
     row, col = check_row_col(board, column)
     row_at_board = 2 * row - 1
     col_at_board = 2 * col - 1
-    board[row_at_board][col_at_board] = piece
 
-    return board
+    # https://stackoverflow.com/questions/22054698/python-modifying-list-inside-a-function
+    # https://stackoverflow.com/questions/2612802/list-changes-unexpectedly-after-assignment-how-do-i-clone-or-copy-it-to-prevent
+    # https://www.programiz.com/python-programming/methods/list/copy
+    # https://stackoverflow.com/questions/28684154/python-copy-a-list-of-lists
+    updated_board = copy.deepcopy(board)
+    updated_board[row_at_board][col_at_board] = piece
+
+    return updated_board
+
 
 def check_sequence(x, n):
     if n > len(x):
@@ -190,7 +208,8 @@ def end(board):
             return winner
 
     for index_sum in range(2, 13):
-        diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if i + j == index_sum]
+        diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if
+                i + j == index_sum]
         # print("diag:", diag)
         winner = check_sequence(diag, 4)
         # print("winner diag:", winner)
@@ -198,7 +217,8 @@ def end(board):
             return winner
 
     for index_sum in range(0, -6, -1):
-        rev_diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if i - j == index_sum]
+        rev_diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if
+                    i - j == index_sum]
         winner = check_sequence(rev_diag, 4)
         if winner[0]:
             return winner
@@ -219,6 +239,7 @@ def play():
     game = draw_new_board()
     print_board(game)
     current_player = 1
+    res = "none"
 
     in_game = True
     while in_game is True:
@@ -243,7 +264,26 @@ if __name__ == '__main__':
 
     # ---- Functions' checks ----
     print("\n\n=== Checks starts ===\n")
+    nb = draw_new_board()
+    first_run = put_piece(nb, 1, 1)  # this require a copy.deepcopy()!!
     check_res = [
+        len(nb) == 13,  # rows
+        len(nb[0]) == 15,  # cols
+        len(nb[0]) == len(nb[1]),
+        select_player(1) == "X",
+        select_player(2) == "O",
+        select_player(3) == "!!!",
+        check_player(1) == 1,
+        check_player(2) == 2,
+        check_column(1) == 1,
+        nb[11][1] == " ",  # should be empty even after put_piece()
+        check_row_col(nb, 1)[0] == 6,
+        check_row_col(nb, 1)[1] == 1,
+        len(first_run) == len(nb),
+        len(first_run[0]) == len(nb[0]),
+        len(first_run[1]) == len(nb[0]),
+        first_run[11][1] == "X",
+        check_row_col(first_run, 1)[0] == 5,
         [True, 1] == check_sequence([1, 2, 3, 4], 1),
         [False, " "] == check_sequence([1, 2, 3, 4], 2),
         [True, 1] == check_sequence([1, 1, 3, 4, 6], 2),
