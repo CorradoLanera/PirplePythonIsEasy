@@ -48,7 +48,8 @@ __credits__ = [
     "https://stackoverflow.com/questions/22054698/python-modifying-list-inside-a-function",
     "https://stackoverflow.com/questions/2612802/list-changes-unexpectedly-after-assignment-how-do-i-clone-or-copy-it-to-prevent",
     "https://www.programiz.com/python-programming/methods/list/copy",
-    "https://stackoverflow.com/questions/28684154/python-copy-a-list-of-lists"
+    "https://stackoverflow.com/questions/28684154/python-copy-a-list-of-lists",
+    "https://pypi.org/project/termcolor/"
 ]
 __license__ = "MIT"
 __version__ = "0.0.1"
@@ -57,6 +58,7 @@ __email__ = "corrado.lanera@gmail.com"
 
 # --- MODULES ----------------------------------------------------------
 import copy  # required for `put_piece()`
+from termcolor import colored  # required in `select_player(player)`
 
 
 # --- PROGRAM DEFINITIONS ----------------------------------------------
@@ -92,12 +94,12 @@ def print_board(x):
 
 def select_player(player):
     if player == 1:
-        selected_piece = "X"
+        selected_piece = colored("X", "red", attrs=["bold"])
     elif player == 2:
-        selected_piece = "O"
+        selected_piece = colored("O", "blue", attrs=["bold"])
     else:
         print("Wrong player selected")
-        selected_piece = "!!!"
+        selected_piece = colored("!!!", "grey", attrs=["bold"])
 
     return selected_piece
 
@@ -297,7 +299,11 @@ def play(game=draw_new_board(), first_player=0):
             print_board(game)
             return game
 
-    res = {"X": "player 1", "O": "player 2", "none": "none"}[res[1]]
+    res = {
+        select_player(1): "player 1",
+        select_player(2): "player 2",
+        "none": "none"
+    }[res[1]]
     print("Game Over. The winner is:", res)
     return game
 
@@ -309,6 +315,9 @@ if __name__ == '__main__':
     # ---- Functions' checks ----
     print("\n\n=== Checks starts ===\n")
     nb = draw_new_board()
+    p1X = colored("X", "red", attrs=["bold"])
+    p2O = colored("O", "blue", attrs=["bold"])
+    pERROR = colored("!!!", "grey", attrs=["bold"])
     first_run = put_piece(nb, 1, 1)  # this require a copy.deepcopy()!!
     winner_col = put_piece(first_run, 1, 1)
     winner_col = put_piece(winner_col, 1, 1)
@@ -362,10 +371,10 @@ if __name__ == '__main__':
         len(nb) == 13,  # rows
         len(nb[0]) == 15,  # cols
         len(nb[0]) == len(nb[1]),
-        select_player(1) == "X",
-        select_player(2) == "O",
+        select_player(1) == p1X,
+        select_player(2) == p2O,
         # 5
-        select_player(3) == "!!!",
+        select_player(3) == pERROR,
         check_player(1) == 1,
         check_player(2) == 2,
         check_column(1) == 1,
@@ -377,7 +386,7 @@ if __name__ == '__main__':
         len(first_run[0]) == len(nb[0]),
         len(first_run[1]) == len(nb[0]),
         # 15
-        first_run[11][1] == "X",
+        first_run[11][1] == p1X,
         check_row_col(first_run, 1)[0] == 5,
         [True, 1] == check_sequence([1, 2, 3, 4], 1),
         [False, " "] == check_sequence([1, 2, 3, 4], 2),
@@ -390,14 +399,14 @@ if __name__ == '__main__':
         [True, 3] == check_sequence([1, 2, 3, 3, 3, 3, 8, 7], 4),
         # 25
         [False, " "] == check_sequence([3, 3, 3, 4, 4, 3, 3, 3], 4),
-        [True, "X"] == check_col(winner_col, 1),
+        [True, p1X] == check_col(winner_col, 1),
         check_col(winner_col, 2)[0] is False,
-        [True, "X"] == check_row(winner_row, 6),
+        [True, p1X] == check_row(winner_row, 6),
         check_row(winner_row, 5)[0] is False,
         # 30
-        [True, "X"] == check_diag(winner_diag, 7),
+        [True, p1X] == check_diag(winner_diag, 7),
         check_diag(winner_diag, 8)[0] is False,
-        [True, "O"] == check_diag(winner_diag, 2, rev=True),
+        [True, p2O] == check_diag(winner_diag, 2, rev=True),
         check_diag(winner_diag, 3, rev=True)[0] is False,
         empties_in_board(nb) == 42,
         # 35
@@ -408,10 +417,10 @@ if __name__ == '__main__':
         empties_in_board(full_board) == 0,
         # 40
         [False, " "] == end(nb),
-        [True, "X"] == end(winner_row),
-        [True, "X"] == end(winner_col),
-        [True, "X"] == end(winner_diag),  # main diag evaluated first!
-        [True, "O"] == end(full_board),  # start from upper horizontal!
+        [True, p1X] == end(winner_row),
+        [True, p1X] == end(winner_col),
+        [True, p1X] == end(winner_diag),  # main diag evaluated first!
+        [True, p2O] == end(full_board),  # start from upper horizontal!
     ]
 
     if all(check_res):
