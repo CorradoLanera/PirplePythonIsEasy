@@ -55,9 +55,9 @@ __version__ = "0.0.1"
 __maintainer__ = "Corrado Lanera"
 __email__ = "corrado.lanera@gmail.com"
 
-
 # --- MODULES ----------------------------------------------------------
-import copy
+import copy  # required for `put_piece()`
+
 
 # --- PROGRAM DEFINITIONS ----------------------------------------------
 def draw_new_board():
@@ -172,7 +172,7 @@ def put_piece(board, player, column):
 def check_sequence(x, n):
     if n > len(x):
         return [False, " "]
-    for i in range(len(x) - n + 1):
+    for i in range(len(x) - n + 1):  # all possible starting points
         ref = x[i]
         if ref == " ":
             continue
@@ -185,80 +185,124 @@ def check_sequence(x, n):
     return [False, " "]
 
 
-def end(board):
-    rows = [1, 2, 3, 4, 5, 6]
-    cols = [1, 2, 3, 4, 5, 6, 7]
+def check_row(board, i):
+    i_in_board = 2 * i - 1
+    row = [x for x in board[i_in_board] if x not in {"|", " "}]
+    return check_sequence(row, 4)
 
-    for i in rows:
-        i_in_board = 2 * i - 1
-        row = [x for x in board[i_in_board] if x not in {"|", " "}]
-        # print("row:", row)
-        winner = check_sequence(row, 4)
-        # print("winner row:", winner)
-        if winner[0]:
-            return winner
 
-    for j in cols:
-        j_in_board = 2 * j - 1
-        col = [board[i][j_in_board] for i in range(13) if i % 2 != 0]
-        # print("col:", col)
-        winner = check_sequence(col, 4)
-        # print("winner col:", winner)
-        if winner[0]:
-            return winner
+def check_col(board, j):
+    j_in_board = 2 * j - 1
+    col = [board[i][j_in_board] for i in range(13) if i % 2 != 0]
+    return check_sequence(col, 4)
 
-    for index_sum in range(2, 13):
-        diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if
-                i + j == index_sum]
-        # print("diag:", diag)
-        winner = check_sequence(diag, 4)
-        # print("winner diag:", winner)
-        if winner[0]:
-            return winner
 
-    for index_sum in range(0, -6, -1):
-        rev_diag = [board[2 * i - 1][2 * j - 1] for i in rows for j in cols if
-                    i - j == index_sum]
-        winner = check_sequence(rev_diag, 4)
-        if winner[0]:
-            return winner
+def are_in_diag(i, j, index_sum, rev=False):
+    if rev is True:
+        check = i - j == index_sum
+    else:
+        check = i + j == index_sum
 
+    return check
+
+
+def check_diag(board, index_sum, rev=False):
+    row_range = range(int((len(board) - 1) / 2))
+    col_range = range(int((len(board[0]) - 1) / 2))
+
+    rows = [i + 1 for i in row_range]
+    cols = [j + 1for j in col_range]
+
+    diag = [
+        board[2 * i - 1][2 * j - 1] for i in rows for j in cols if
+        are_in_diag(i, j, index_sum, rev=rev)
+    ]
+    return check_sequence(diag, 4)
+
+
+def empties_in_board(board):
     empties = 0
     for i in board:
         for j in i:
             if j == " ":
                 empties += 1
-    if empties == 0:
-        return [True, "none"]
+    return empties
+
+
+def end(board):
+    rows = [1, 2, 3, 4, 5, 6]
+    cols = [1, 2, 3, 4, 5, 6, 7]
+
+    empties = empties_in_board(board)
     print("Empties left: ", empties)
+
+    for i in rows:
+        winner = check_row(board, i)
+        if winner[0]:
+            return winner
+
+    for j in cols:
+        winner = check_col(board, j)
+        if winner[0]:
+            return winner
+
+    for index_sum in range(2, 13):  # possible i + j (+1 for `range()`)
+        winner = check_diag(board, index_sum)
+        if winner[0]:
+            return winner
+
+    for index_sum in range(-5, 7):  # possible i - j (+1 for `range()`)
+        winner = check_diag(board, index_sum, rev=True)
+        if winner[0]:
+            return winner
+
+    if empties == 0:  # if none have won in the very last move
+        return [True, "none"]
 
     return [False, " "]
 
 
-def play():
-    game = draw_new_board()
+def play(game=draw_new_board(), first_player=0):
+    """
+    Play a "Connect 4" game.
+    :param game: a board (by default create a new empty one); this
+      param is useful to continue a previous saved game.
+    :param first_player: player starting to play (by default it is 0,
+      which does not exists, so triggering the query of who start to
+      play.
+    :return: At the end of the game, return the final board.
+    """
     print_board(game)
-    current_player = 1
+    current_player = check_player(first_player)
     res = "none"
 
     in_game = True
     while in_game is True:
         print("It is the turn of player ", current_player)
         column = int(input("Select a column for your piece: "))
-        put_piece(game, current_player, column)
+        game = put_piece(game, current_player, column)
         print_board(game)
         current_player = abs(3 - current_player)
 
         res = end(game)
-        print("res: ", res)
+        # print("res: ", res)
         in_game = not res[0]
+        continue_playing = input(
+            "Press Enter to continue playing " +
+            " (or anything else to stop and get the current board)."
+        )
+        if continue_playing != "":
+            print("Game Interrupted. No one win... for the moment!")
+            print("This is the last board")
+            print_board(game)
+            return game
 
     res = {"X": "player 1", "O": "player 2", "none": "none"}[res[1]]
     print("Game Over. The winner is:", res)
     return game
 
 
-# --- PROGRMA CHECKS AND INTERACTIONS ----------------------------------
+# --- PROGRAM CHECKS AND INTERACTIONS ----------------------------------
 
 if __name__ == '__main__':
 
@@ -266,37 +310,112 @@ if __name__ == '__main__':
     print("\n\n=== Checks starts ===\n")
     nb = draw_new_board()
     first_run = put_piece(nb, 1, 1)  # this require a copy.deepcopy()!!
+    winner_col = put_piece(first_run, 1, 1)
+    winner_col = put_piece(winner_col, 1, 1)
+    winner_col = put_piece(winner_col, 1, 1)
+    winner_row = put_piece(first_run, 1, 2)
+    winner_row = put_piece(winner_row, 1, 3)
+    winner_row = put_piece(winner_row, 1, 4)
+    winner_diag = put_piece(first_run, 2, 2)
+    winner_diag = put_piece(winner_diag, 1, 2)
+    winner_diag = put_piece(winner_diag, 2, 3)
+    winner_diag = put_piece(winner_diag, 2, 3)
+    winner_diag = put_piece(winner_diag, 1, 3)
+    winner_diag = put_piece(winner_diag, 2, 4)
+    winner_diag = put_piece(winner_diag, 2, 4)
+    winner_diag = put_piece(winner_diag, 2, 4)
+    winner_diag = put_piece(winner_diag, 1, 4)
+    winner_diag = put_piece(winner_diag, 1, 1)
+    winner_diag = put_piece(winner_diag, 1, 1)
+    winner_diag = put_piece(winner_diag, 2, 1)
+    winner_diag = put_piece(winner_diag, 2, 2)
+    full_board = put_piece(winner_diag, 2, 2)
+    full_board = put_piece(full_board, 2, 1)
+    full_board = put_piece(full_board, 2, 2)
+    full_board = put_piece(full_board, 2, 1)
+    full_board = put_piece(full_board, 2, 2)
+    full_board = put_piece(full_board, 2, 3)
+    full_board = put_piece(full_board, 2, 3)
+    full_board = put_piece(full_board, 2, 4)
+    full_board = put_piece(full_board, 2, 3)
+    full_board = put_piece(full_board, 2, 4)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+    full_board = put_piece(full_board, 2, 5)
+    full_board = put_piece(full_board, 2, 6)
+    full_board = put_piece(full_board, 2, 7)
+
     check_res = [
         len(nb) == 13,  # rows
         len(nb[0]) == 15,  # cols
         len(nb[0]) == len(nb[1]),
         select_player(1) == "X",
         select_player(2) == "O",
+        # 5
         select_player(3) == "!!!",
         check_player(1) == 1,
         check_player(2) == 2,
         check_column(1) == 1,
         nb[11][1] == " ",  # should be empty even after put_piece()
+        # 10
         check_row_col(nb, 1)[0] == 6,
         check_row_col(nb, 1)[1] == 1,
         len(first_run) == len(nb),
         len(first_run[0]) == len(nb[0]),
         len(first_run[1]) == len(nb[0]),
+        # 15
         first_run[11][1] == "X",
         check_row_col(first_run, 1)[0] == 5,
         [True, 1] == check_sequence([1, 2, 3, 4], 1),
         [False, " "] == check_sequence([1, 2, 3, 4], 2),
         [True, 1] == check_sequence([1, 1, 3, 4, 6], 2),
+        # 20
         [True, 3] == check_sequence([1, 2, 3, 3], 2),
         [True, 1] == check_sequence([1, 1, 1, 4], 3),
         [True, 1] == check_sequence([4, 1, 1, 1], 3),
         [True, 1] == check_sequence([1, 1, 1, 1, 1, 6, 8, 7], 4),
         [True, 3] == check_sequence([1, 2, 3, 3, 3, 3, 8, 7], 4),
-        [False, " "] == check_sequence([3, 3, 3, 4, 4, 3, 3, 3], 4)
+        # 25
+        [False, " "] == check_sequence([3, 3, 3, 4, 4, 3, 3, 3], 4),
+        [True, "X"] == check_col(winner_col, 1),
+        check_col(winner_col, 2)[0] is False,
+        [True, "X"] == check_row(winner_row, 6),
+        check_row(winner_row, 5)[0] is False,
+        # 30
+        [True, "X"] == check_diag(winner_diag, 7),
+        check_diag(winner_diag, 8)[0] is False,
+        [True, "O"] == check_diag(winner_diag, 2, rev=True),
+        check_diag(winner_diag, 3, rev=True)[0] is False,
+        empties_in_board(nb) == 42,
+        # 35
+        empties_in_board(first_run) == 41,
+        empties_in_board(winner_row) == 38,
+        empties_in_board(winner_col) == 38,
+        empties_in_board(winner_diag) == 28,
+        empties_in_board(full_board) == 0,
+        # 40
+        [False, " "] == end(nb),
+        [True, "X"] == end(winner_row),
+        [True, "X"] == end(winner_col),
+        [True, "X"] == end(winner_diag),  # main diag evaluated first!
+        [True, "O"] == end(full_board),  # start from upper horizontal!
     ]
 
     if all(check_res):
-        print("\n=== All checks passed ===\n\n")
+        print("\n=== All", len(check_res), "checks passed ===\n\n")
     else:
         wrong = [i + 1 for i, x in enumerate(check_res) if not x]
         print("\n=== !!! Check(s) not passed:", wrong, "!!! ===\n\n")
