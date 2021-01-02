@@ -119,16 +119,59 @@ class Cars(Vehicle):
         if self.TripsSinceMaintenance > 100:
             self.NeedsMaintenance = True
 
+    def ride(self):
+        self.Drive()
+        self.Stop()
 
-def ride(car):
-    car.Drive()
-    car.Stop()
+
+    def rideBy(self, times):
+        for t in range(times):
+            self.ride()
+        print(f"Run {self.Make} {self.Model} for {times} rides.")
 
 
-def rideBy(car, times):
-    for t in range(times):
-        ride(car)
-    print(f"Run {car.Make} {car.Model} for {times} rides.")
+class Planes(Vehicle):
+    def __init__(self):
+        Vehicle.__init__(self)
+        self.isFlying = False
+
+    def Fly(self):
+        if self.NeedsMaintenance is False:
+            self.isFlying = True
+            done = True
+        else:
+            print("ERROR: The plane can't fly until it's repaired.")
+            done = False
+
+        return done
+
+
+    def Land(self):
+        if self.isFlying is True:
+            self.isFlying = False
+            self.TripsSinceMaintenance += 1
+
+        if self.TripsSinceMaintenance > 100:
+            self.NeedsMaintenance = True
+
+    def ride(self):
+        done = self.Fly()
+        if done is True:
+            self.Land()
+        return done
+
+
+    def rideBy(self, times):
+        print(f"Try running {self.Make} {self.Model} for {times} flights.")
+        tot = 0
+        for t in range(times):
+            tot += int(self.ride())
+
+        print(f"{self.Make} {self.Model} runs for {tot} flights.")
+        miss = times - tot
+        if miss > 0:
+            print(f"{miss} flight(s) was cancelled due to maintenance needed.")
+
 
 # --- PROGRAM INTERACTIONS ---------------------------------------------
 
@@ -146,7 +189,7 @@ if __name__ == '__main__':
         punto.setYear("2000")
         punto.setWeight(1025)
         print(punto)
-        rideBy(punto, 17)
+        punto.rideBy(17)
         print(punto)
 
         # Opel Corsa
@@ -156,7 +199,7 @@ if __name__ == '__main__':
         corsa.setYear("1997")
         corsa.setWeight(1055)
         print(corsa)
-        rideBy(corsa, 35)
+        corsa.rideBy(35)
         print(corsa)
 
         # Citroen C3
@@ -166,8 +209,18 @@ if __name__ == '__main__':
         c3.setYear("2004")
         c3.setWeight(1055)
         print(c3)
-        rideBy(c3, 135)
+        c3.rideBy(135)
         print(c3)
+
+        # Boeing 247
+        b247 = Planes()
+        b247.setMake("Boeing")
+        b247.setModel("247")
+        b247.setYear("1933")
+        b247.setWeight(4046)
+        print(b247)
+        b247.rideBy(135)
+        print(b247)
 
 
 
