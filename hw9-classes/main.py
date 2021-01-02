@@ -50,7 +50,9 @@ You may only submit one file with maximum 100 MB in size
 """
 
 __author__ = "Corrado Lanera"
-__credits__ = []
+__credits__ = [
+    "https://www.datacamp.com/community/tutorials/f-string-formatting-in-python"
+]
 __license__ = "MIT"
 __version__ = "0.0.1"
 __maintainer__ = "Corrado Lanera"
@@ -61,25 +63,114 @@ __email__ = "corrado.lanera@gmail.com"
 
 
 # --- PROGRAM DEFINITIONS ----------------------------------------------
-class Veicle:
-    def __init__(self, Make=None, Model=None, Year=None, Weight=None,
-                 NeedsMaintenance=False, TripsSinceMaintenance=0):
-        self.Make = Make
-        self.Model = Model
-        self.Year = Year
-        self.Weight = Weight
-        self.NeedsMaintenance = NeedsMaintenance
-        self.TripsSinceMaintenance = TripsSinceMaintenance
+class Vehicle:
+    def __init__(self):
+        self.Make = None
+        self.Model = None
+        self.Year = None
+        self.Weight = None
+        self.NeedsMaintenance = False
+        self.TripsSinceMaintenance = 0
 
+    # setters
+    def setMake(self, make):
+        self.Make = make
+
+    def setModel(self, model):
+        self.Model = model
+
+    def setYear(self, year):
+        self.Year = year
+
+    def setWeight(self, weight):
+        self.Weight = weight
+
+    # methods
+    def Repair(self):
+        self.TripsSinceMaintenance = 0
+        self.NeedsMaintenance = False
+
+    # str
+    def __str__(self):
+        return f"""Vehicle:
+    Make: {self.Make}
+    Model: {self.Model}
+    Year: {self.Year}
+    Weight: {self.Weight}
+    
+    Trips since maintenance: {self.TripsSinceMaintenance}
+    Needs maintenance: {self.NeedsMaintenance}
+"""
+
+
+class Cars(Vehicle):
+    def __init__(self):
+        Vehicle.__init__(self)
+        self.isDriving = False
+
+    def Drive(self):
+        self.isDriving = True
+
+    def Stop(self):
+        if self.isDriving is True:
+            self.isDriving = False
+            self.TripsSinceMaintenance += 1
+
+        if self.TripsSinceMaintenance > 100:
+            self.NeedsMaintenance = True
+
+
+def ride(car):
+    car.Drive()
+    car.Stop()
+
+
+def rideBy(car, times):
+    for t in range(times):
+        ride(car)
+    print(f"Run {car.Make} {car.Model} for {times} rides.")
 
 # --- PROGRAM INTERACTIONS ---------------------------------------------
 
 if __name__ == '__main__':
-    interact = False
+    interact = True
 
     go_on = True
     while interact and go_on is True:
         # --- START OF THE CODE TO RUN ---
+
+        # Fiat Punto
+        punto = Cars()
+        punto.setMake("Fiat")
+        punto.setModel("Punto")
+        punto.setYear("2000")
+        punto.setWeight(1025)
+        print(punto)
+        rideBy(punto, 17)
+        print(punto)
+
+        # Opel Corsa
+        corsa = Cars()
+        corsa.setMake("Opel")
+        corsa.setModel("Corsa")
+        corsa.setYear("1997")
+        corsa.setWeight(1055)
+        print(corsa)
+        rideBy(corsa, 35)
+        print(corsa)
+
+        # Citroen C3
+        c3 = Cars()
+        c3.setMake("Citroen")
+        c3.setModel("C3")
+        c3.setYear("2004")
+        c3.setWeight(1055)
+        print(c3)
+        rideBy(c3, 135)
+        print(c3)
+
+
+
         # --- END OF THE CODE TO RUN ---
         go = input(
             "Press Enter to continue the interactive simulation" +
