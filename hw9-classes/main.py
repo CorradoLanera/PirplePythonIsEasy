@@ -62,17 +62,23 @@ __email__ = "corrado.lanera@gmail.com"
 
 # --- PROGRAM DEFINITIONS ----------------------------------------------
 class Veicle:
-    def __init__(self):
-        None
+    def __init__(self, Make=None, Model=None, Year=None, Weight=None,
+                 NeedsMaintenance=False, TripsSinceMaintenance=0):
+        self.Make = Make
+        self.Model = Model
+        self.Year = Year
+        self.Weight = Weight
+        self.NeedsMaintenance = NeedsMaintenance
+        self.TripsSinceMaintenance = TripsSinceMaintenance
 
 
 # --- PROGRAM INTERACTIONS ---------------------------------------------
 
 if __name__ == '__main__':
-    interact = True
+    interact = False
 
     go_on = True
-    while go_on is True:
+    while interact and go_on is True:
         # --- START OF THE CODE TO RUN ---
         # --- END OF THE CODE TO RUN ---
         go = input(
