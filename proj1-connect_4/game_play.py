@@ -171,7 +171,7 @@ class GamePlay(object):
 
     @property
     def availables(self):
-        return [col for col in range(self.cols) if self.is_available(col)]
+        return [col for col in range(self.board.cols) if self.is_available(col)]
 
     def undo(self):
         if self.won:
@@ -187,11 +187,11 @@ class GamePlay(object):
 
     def drop(self, col):
         """ Drop a new piece into a column of the board """
+        col = col - 1
         if self.won:
             raise RuntimeError(f"Game has been won by {self.winner}")
         if not self.is_available(col):
             raise TypeError(f"Column {col} full...")
-        col = col - 1
         row = self._levels[col]
         move = self.board.move(col, row, self.current, )
         self._levels[col] = self._levels[col] + 1
