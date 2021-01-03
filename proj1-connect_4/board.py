@@ -101,6 +101,7 @@ class Board(object):
     def from_dict(cls, data):
         """ load a Board class from a dict (inverse of `to_dict`)
         """
+        data["moves"] = tuple(tuple(move) for move in data.pop("moves", []))
         return cls(**data)
 
     @classmethod
