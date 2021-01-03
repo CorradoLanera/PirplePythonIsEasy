@@ -1,3 +1,6 @@
+import json
+
+
 def create_empty_cols(cols, rows):
     """ Create a new blank board
 
@@ -9,18 +12,6 @@ def create_empty_cols(cols, rows):
 
 def get_row(board, num):
     return [col[num] for col in board]
-
-
-def get_level(col):
-    """ calculate the fill level of a column """
-    for num, val in enumerate(col):
-        if val == 0:
-            return num
-
-
-def get_levels(board):
-    """ Calculate the fill level for all columns in a board """
-    return [get_level(col) for col in board]
 
 
 def get_number_of_rows(board):
@@ -74,12 +65,36 @@ class Board(object):
     Extends the functionalities of the simple board (list of columns);
     """
 
-    def __init__(self, board):
+    def __init__(self, board, moves=(), valid=None, overwrite=True):
         """ base constructor """
         self.board = board
         self.cols = len(board)
         self.rows = get_number_of_rows(board)
-        self.levels = get_levels(board)
+        self.moves = moves
+        self.valid = valid
+        self.overwrite = overwrite
+
+    def to_dict(self):
+        return {
+            "board": self.board,
+            "moves": self.moves,
+            "valid": self.valid,
+            "overwrite": self.overwrite,
+        }
+
+    def __str__(self):
+        return json.dumps(self.to_dict())
+
+    @classmethod
+    def from_dict(cls, data):
+        return cls(**data)
+
+    @classmethod
+    def loads(cls, data):
+        return cls.from_dict(json.loads(data))
+
+    def __len__(self):
+        return len(self.moves)
 
     def __getitem__(self, pos):
         """ allow indexing the board using the notation `Board[3, 4]`
@@ -88,14 +103,24 @@ class Board(object):
         return self.board[col][row]
 
     @classmethod
-    def blank(cls, cols, rows):
+    def blank(cls, cols, rows, valid=None, overwrite=True):
         """ create a blank board """
-        return cls(create_empty_cols(cols, rows))
+        return cls(
+            create_empty_cols(cols, rows),
+            valid=valid,
+            overwrite=overwrite)
 
     @classmethod
-    def default(cls):
-        """ create a blank board of default size """
-        return cls(create_empty_cols(7, 6))
+    def default_c4(cls):
+        """ create a blank board to play a connect-4 game """
+        return cls(
+            create_empty_cols(7, 6),
+            valid=[-1, 1],
+            overwrite=False)
+
+    @property
+    def size(self):
+        return (self.cols, self.rows)
 
     def flip_updown(self):
         return Board(flip_updown(self.board))
@@ -112,7 +137,8 @@ class Board(object):
         return self.board[num]
 
     def get_diagonal(self, pnt, direction=1):
-        # print(pnt, self.board)
+        """ the the diagonal values passing through a point
+        """
         if direction == -1:
             col, row = pnt
             pnt = (col, self.rows - row - 1)
@@ -120,33 +146,22 @@ class Board(object):
         indeces = diagonal_indeces(pnt, self.cols, self.rows)
         return [self.board[col][row] for col, row in indeces]
 
-    def is_available(self, col):
-        """ check if a given column is playable """
-        if col >= self.cols:
-            return False
-        return self.levels[col] < self.rows
-
-    def is_full(self, col):
-        """ check if a given column is full """
-        return not self.is_available(col)
-
-    @property
-    def available(self):
-        return [col for col in range(self.cols) if self.is_available(col)]
-
     @property
     def T(self):
         """ transpose board """
         return [self.get_row(num) for num in range(self.rows)]
 
-    def drop(self, value, col):
-        if not self.is_available(col):
-            raise TypeError(f"Column {col} full...")
-        if value not in [1, -1]:
+    def move(self, col, row, value, ):
+
+        if self.valid is not None and value not in self.valid:
             raise TypeError(f"value -{value}- can only be set([1, -1])")
-        move = (col, self.levels[col], value)
-        self.board[col][self.levels[col]] = value
-        self.levels[col] = self.levels[col] + 1
+
+        if self.board[col][row] != 0 and not self.overwrite:
+            raise TypeError(f"point ({col}, {row}) cannot be overwritten...")
+
+        self.board[col][row] = value
+        move = (col, row, value)
+        self.moves = self.moves + (move, )
         return move
 
     def print_simple(self):
