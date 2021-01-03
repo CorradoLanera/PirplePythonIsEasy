@@ -62,11 +62,17 @@ def diagonal_indeces(pnt, cols, rows):
 class Board(object):
     """ The Boar Object
 
-    Extends the functionalities of the simple board (list of columns);
+    Extends the functionalities of the simple board (list of columns)
     """
 
     def __init__(self, board, moves=(), valid=None, overwrite=True):
-        """ base constructor """
+        """ base constructor
+
+        :param board: a simple board (see create_empty_cols above)
+        :param moves: a tuple of `(col, row, value)` already played moves
+        :param valid: a list of valid values that can be played on the board
+        :param overwrite: (bool) allow/disallow playing again on the same position
+        """
         self.board = board
         self.cols = len(board)
         self.rows = get_number_of_rows(board)
@@ -75,6 +81,8 @@ class Board(object):
         self.overwrite = overwrite
 
     def to_dict(self):
+        """ Convert the Board class to a dict (convenient for serialization)
+        """
         return {
             "board": self.board,
             "moves": self.moves,
@@ -87,10 +95,14 @@ class Board(object):
 
     @classmethod
     def from_dict(cls, data):
+        """ load a Board class from a dict (inverse of `to_dict`)
+        """
         return cls(**data)
 
     @classmethod
     def loads(cls, data):
+        """ Load a Board class from a string (inverse of `__str__`)
+        """
         return cls.from_dict(json.loads(data))
 
     def __len__(self):
@@ -123,9 +135,13 @@ class Board(object):
         return (self.cols, self.rows)
 
     def flip_updown(self):
+        """ flip up/donw (row-wise)
+        """
         return Board(flip_updown(self.board))
 
     def flip_leftright(self):
+        """ flip left/right (column-wise)
+        """
         return Board(self.board[::-1])
 
     def get_row(self, num):
@@ -152,6 +168,11 @@ class Board(object):
         return [self.get_row(num) for num in range(self.rows)]
 
     def move(self, col, row, value, ):
+        """ Play a move
+
+        move: a move consists of a row, col and value to be placed on
+        the board
+        """
 
         if self.valid is not None and value not in self.valid:
             raise TypeError(f"value -{value}- can only be set([1, -1])")
