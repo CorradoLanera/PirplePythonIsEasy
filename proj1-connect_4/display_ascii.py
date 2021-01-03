@@ -34,7 +34,7 @@ def print_col_vert(cols):
     print("    " + " ".join("|" for _ in range(cols)))
 
 
-def print_ascii(game):
+def print_game(game):
     symbol_map = symbol_mapper(game)
     board = game.board
     print_col_names(board.cols)
