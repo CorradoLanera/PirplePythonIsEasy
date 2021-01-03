@@ -4,18 +4,19 @@ import json
 def create_empty_cols(cols, rows):
     """ Create a new blank board
 
-    A board is a collection (list) of columns (list) containing 
-    `{-1, 0, 1}` values
+    A simple board is a collection (list) of columns (list) values
     """
     return [[0 for _ in range(rows)] for _ in range(cols)]
 
 
 def get_row(board, num):
+    """ get the row of a simple board
+    """
     return [col[num] for col in board]
 
 
 def get_number_of_rows(board):
-    """ check the number of rows in each column of a board 
+    """ check the number of rows in each column of a simple board
 
     This function raises a TypeError if the columns are not all of the
     same size
@@ -29,6 +30,8 @@ def get_number_of_rows(board):
 
 
 def flip_updown(board):
+    """ flip up/down a simple board
+    """
 
     def _flip_col(col):
         return col[::-1]
@@ -38,7 +41,8 @@ def flip_updown(board):
 
 def diagonal_indeces(pnt, cols, rows):
     """ Indices for a positive diagonal going through a point
-    :param pnt: a (col, row) tuple to grab the diagonal from
+
+    :param pnt: a (col, row) tuple; the diagonal will pass through pnt
     :param cols: number of columns in the board
     :param rows: number of rows in the board
     """
