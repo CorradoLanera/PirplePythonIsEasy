@@ -18,14 +18,23 @@ def store_game(game, path):
 def input_choice(game):
     # shitty fun to iterate until a valid input is selected form user
     valid = [str(val + 1) for val in game.availables]
-    message = (
-        f"enter column number for player {display.current_symbol(game)}\n" \
-        f"(available values {valid}, u for undo and q for quit\n" \
-        f"-> "
-    )
+    if len(game) == 0:
+        message = (
+            f"enter column number for player {display.current_symbol(game)}\n" \
+            f"(available values {valid}, q for quit\n" \
+            f"-> "
+        )
+        valid.extend(["q"])
+    else:
+        message = (
+            f"enter column number for player {display.current_symbol(game)}\n" \
+            f"(available values {valid}, u for undo last move q for quit\n" \
+            f"-> "
+        )
+        valid.extend(["q", "u"])
     while True:
         choice = input(message).lower()
-        if choice in valid + ["u", "q"]:
+        if choice in valid:
             return choice
         else:
             print(f"value {choice} not allowed...")
