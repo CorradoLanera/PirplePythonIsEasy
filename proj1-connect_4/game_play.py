@@ -3,7 +3,7 @@ import json
 import functools
 
 # local imports
-import board
+from board import Board
 
 
 def squish_sequence(values):
@@ -56,31 +56,55 @@ def connect4_winning_point(pnt, board, threshold=4):
     return 0
 
 
-def connect4_winning_drop(drop, board, threshold=4):
+def connect4_winning_move(move, board, threshold=4):
     """
     :param pnt: a point on a board (col, row)
     :param board: a Board object (not a simple board)
     :param threshold: a value (being connect-4, this should be 4, right?)
     """
-    col, row, player = drop
+    col, row, player = move
     return connect4_winning_point((col, row), board, threshold=threshold)
 
+
+def get_level(col):
+    """ calculate the fill level of a column """
+    for num, val in enumerate(col):
+        if val == 0:
+            return num
+
+
+def get_levels(board):
+    """ Calculate the fill level for all columns in a board """
+    return [get_level(col) for col in board]
 
 
 class GamePlay(object):
 
-    def __init__(self, board, drops=(), start_symbol="X", threshold=4, winner=0):
+    def __init__(self, board, start_symbol="X", threshold=4, winner=0):
         """ Base Game Constructor
         :param board: a Board object
-        :param drops: full history of drops (as returned by Board.drop())
         :param start_player: symbol of the starting player {'X', 'O'}
+        :param threshold: the winning streak threshold (4)
+        :param winner: the winning player (0 for an ongoing game)
         """
         assert start_symbol in ["X", "O"]
         self.board = board
         self.start_symbol = start_symbol
         self.threshold = threshold
-        self.drops = tuple(tuple(drop) for drop in drops)
         self.winner = winner
+        self._levels = get_levels(board.board)
+
+    @classmethod
+    def default_c4(cls, start_symbol="X", ):
+        """ Create a Game with a default board (blank 6 * 7 board) """
+        return cls(
+            Board.default_c4(),
+            start_symbol=start_symbol,
+            threshold=4,
+            winner=0)
+
+    def __len__(self):
+        return len(self.board)
 
     @property
     def won(self):
@@ -89,44 +113,27 @@ class GamePlay(object):
         return self.winner != 0
 
     @property
-    def moves(self):
-        return len(self.drops)
+    def drops(self):
+        return [move[0] for move in self.board.moves]
 
     @property
     def last(self):
-        if self.moves == 0:
+        if len(self) == 0:
             return None
-        return self.drops[-1]
+        return self.board.moves[-1][0]
 
     @property
     def current(self):
-        if self.moves == 0:
+        if len(self) == 0:
             return 1
         else:
-            col, row, player = self.last
+            col, row, player = self.board.moves[-1]
             return -player
-
-    @classmethod
-    def blank(cls, cols, rows, start_symbol="X", threshold=4):
-        """ Create a Game with a blank board """
-        return cls(
-            board.Board.blank(cols, rows),
-            start_symbol=start_symbol,
-            threshold=threshold)
-
-    @classmethod
-    def default(cls, start_symbol="X", threshold=4):
-        """ Create a Game with a default board (blank 6 * 7 board) """
-        return cls(
-            board.Board.default(),
-            start_symbol=start_symbol,
-            threshold=threshold)
 
     def to_dict(self):
         """ Convert a GamePlay class to a dict object for serialization """
         return dict(
-            board=self.board.board,
-            drops=self.drops,
+            board=self.board.to_dict(),
             start_symbol=self.start_symbol,
             threshold=self.threshold,
             winner=self.winner,
@@ -139,13 +146,8 @@ class GamePlay(object):
     @classmethod
     def from_dict(cls, data):
         """ Load a GamePlay class from a dict object """
-        return cls(
-            board=board.Board(data.pop("board")),
-            drops=data.pop("drops", tuple()),
-            start_symbol=data.pop("start_symbol", "X"),
-            threshold=data.pop("threshold", 4),
-            winner=data.pop("winner", 0)
-        )
+        data["board"] = Board.from_dict(data.pop("board"))
+        return cls(**data)
 
     @classmethod
     def loads(cls, data):
@@ -157,11 +159,42 @@ class GamePlay(object):
         with open(file_name, "r") as fid:
             return cls.loads(fid.read())
 
+    def is_available(self, col):
+        """ check if a given column is playable """
+        if col >= self.board.cols:
+            return False
+        return self._levels[col] < self.board.rows
+
+    def is_full(self, col):
+        """ check if a given column is full """
+        return not self.is_available(col)
+
+    @property
+    def availables(self):
+        return [col for col in range(self.cols) if self.is_available(col)]
+
+    def undo(self):
+        if self.won:
+            raise RuntimeError("cannot undo a completed game")
+        if len(self) == 0:
+            raise RuntimeError("cannot undo a new game")
+        move = self.board.moves[-1]
+        col, row, player = move
+        self.board.board[col][row] = 0
+        self.board.moves = self.board.moves[:-1]
+        self._levels[col] = self._levels[col] - 1
+        return move
+
     def drop(self, col):
         """ Drop a new piece into a column of the board """
         if self.won:
             raise RuntimeError(f"Game has been won by {self.winner}")
-        drop = self.board.drop(self.current, col - 1)
-        self.winner = connect4_winning_drop(drop, self.board, threshold=self.threshold)
-        self.drops = tuple(self.drops + (drop, ))
-        return drop
+        if not self.is_available(col):
+            raise TypeError(f"Column {col} full...")
+        col = col - 1
+        row = self._levels[col]
+        move = self.board.move(col, row, self.current, )
+        self._levels[col] = self._levels[col] + 1
+        self.winner = connect4_winning_move(
+            move, self.board, threshold=self.threshold)
+        return move
