@@ -13,5 +13,11 @@ RUN pip install -r requirements.txt
 # copy the content of the local src directory to the working directory
 COPY main.py .
 
+COPY board.py .
+COPY game_play.py .
+COPY display_ascii.py .
+COPY display_term.py .
+COPY run_one_game.py .
+
 # command to run on container start
-CMD [ "python3", "./main.py" ]
+CMD [ "python3", "./run_one_game.py" ]
