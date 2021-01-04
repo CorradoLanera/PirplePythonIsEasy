@@ -52,7 +52,7 @@ def play(game, path=None):
         if choice.lower() == "q":
             break
         drop = game.drop(int(choice))
-        col, row, value = drop
+        col, row, value, prev = drop
         if path:
             store_game(game, path)
 
