@@ -62,7 +62,7 @@ def connect4_winning_move(move, board, threshold=4):
     :param board: a Board object (not a simple board)
     :param threshold: a value (being connect-4, this should be 4, right?)
     """
-    col, row, player = move
+    col, row, player, prev = move
     return connect4_winning_point((col, row), board, threshold=threshold)
 
 
@@ -82,8 +82,9 @@ class GamePlay(object):
 
     def __init__(self, board, start_symbol="X", threshold=4, winner=0):
         """ Base Game Constructor
+
         :param board: a Board object
-        :param start_player: symbol of the starting player {'X', 'O'}
+        :param start_symbol: symbol of the starting player {'X', 'O'}
         :param threshold: the winning streak threshold (4)
         :param winner: the winning player (0 for an ongoing game)
         """
@@ -127,7 +128,7 @@ class GamePlay(object):
         if len(self) == 0:
             return 1
         else:
-            col, row, player = self.board.moves[-1]
+            col, row, player, _ = self.board.moves[-1]
             return -player
 
     def to_dict(self):
@@ -178,12 +179,9 @@ class GamePlay(object):
             raise RuntimeError("cannot undo a completed game")
         if len(self) == 0:
             raise RuntimeError("cannot undo a new game")
-        move = self.board.moves[-1]
-        col, row, player = move
-        self.board.board[col][row] = 0
-        self.board.moves = self.board.moves[:-1]
+        col, row, val, prev = self.board.undo()
         self._levels[col] = self._levels[col] - 1
-        return move
+        return (col, row, val, prev)
 
     def drop(self, col):
         """ Drop a new piece into a column of the board """
