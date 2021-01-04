@@ -1,12 +1,31 @@
+import copy
 import json
+import random
+import itertools
 
 
-def create_empty_cols(cols, rows):
+def create_empty_cols(cols, rows, value=0):
     """ Create a new blank board
 
     A simple board is a collection (list) of columns (list) values
     """
-    return [[0 for _ in range(rows)] for _ in range(cols)]
+    return [[value for _ in range(rows)] for _ in range(cols)]
+
+
+def create_random_cols(cols, rows, values=None):
+
+    if values is None:
+        values = list(range(10))
+
+    if len(values) == 0:
+        raise TypeError("values must contain at least one item")
+    elif len(values) == 1:
+        return create_empty_cols(cols, rows, values[0])
+
+    def _random_col():
+        return [random.choice(values) for _ in range(rows)]
+
+    return [_random_col() for _ in range(cols)]
 
 
 def get_row(board, num):
@@ -88,10 +107,10 @@ class Board(object):
         """ Convert the Board class to a dict (convenient for serialization)
         """
         return {
-            "board": self.board,
-            "moves": self.moves,
-            "valid": self.valid,
-            "overwrite": self.overwrite,
+            "board": copy.deepcopy(self.board),
+            "moves": copy.deepcopy(self.moves),
+            "valid": copy.deepcopy(self.valid),
+            "overwrite": bool(self.overwrite),
         }
 
     def __str__(self):
@@ -157,10 +176,14 @@ class Board(object):
         """ get the values of a given col """
         return self.board[num]
 
-    def get_diagonal(self, pnt, direction=1):
+    def get_diagonal(self, pnt=None, direction=1):
         """ the the diagonal values passing through a point
         """
+        if pnt is None:
+            pnt = (0, 0)
         if direction == -1:
+            # negative diagonal become positive once the rows are flipped up/down
+            # and the point is reset to the correct row...
             col, row = pnt
             pnt = (col, self.rows - row - 1)
             return self.flip_updown().get_diagonal(pnt)
@@ -172,23 +195,35 @@ class Board(object):
         """ transpose board """
         return [self.get_row(num) for num in range(self.rows)]
 
-    def move(self, col, row, value, ):
+    def flat(self):
+        return list(itertools.chain.from_iterable(self.board))
+
+    def move(self, col, row, value, force=False):
         """ Play a move
 
         move: a move consists of a row, col and value to be placed on
         the board
         """
 
-        if self.valid is not None and value not in self.valid:
-            raise TypeError(f"value -{value}- can only be set([1, -1])")
+        if not force:
+            if self.valid is not None and value not in self.valid:
+                raise TypeError(f"value -{value}- can only be set([1, -1])")
+            if self.board[col][row] != 0 and not self.overwrite:
+                raise TypeError(f"point ({col}, {row}) cannot be overwritten...")
 
-        if self.board[col][row] != 0 and not self.overwrite:
-            raise TypeError(f"point ({col}, {row}) cannot be overwritten...")
-
+        old = self.board[col][row]
         self.board[col][row] = value
-        move = (col, row, value)
+        move = (col, row, value, old)
         self.moves = self.moves + (move, )
         return move
+
+    def undo(self):
+        if len(self) == 0:
+            raise RuntimeError("cannot undo a board with no moves")
+        col, row, val, prev = self.moves[-1]
+        self.board[col][row] = prev
+        self.moves = self.moves[:-1]
+        return (col, row, val, prev)
 
     def print_simple(self):
         """ a simple debugging function """
